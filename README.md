@@ -1,2 +1,2 @@
-# connect4AI
-Simple AI for connect 4 game, made using minimax algorithm and alpha-beta prunning.
+# connect4-AI
+Connect 4 game playable as a console app implemented in C++, with an AI opponent implementing minimax algorithm and alpha-beta prunning.
