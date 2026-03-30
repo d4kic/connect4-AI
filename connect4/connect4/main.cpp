@@ -2,14 +2,13 @@
 #include <limits>
 #include <vector>
 
-#define ROWS 6
-#define COLUMNS 7
-
-#define EMPTY 0
-#define PLAYER 1
-#define COMP 2
-
 using namespace std;
+
+constexpr int ROWS = 6;
+constexpr int COLUMNS = 7;
+constexpr int EMPTY = 0;
+constexpr int PLAYER = 1;
+constexpr int COMP = 2;
 
 const int ORDER[COLUMNS] = { 3, 2, 4, 1, 5, 0, 6 }; // Checks middle first
 
@@ -28,11 +27,15 @@ int moveCount = 0;
 
 void printBoard()
 {
-	system("cls");
+	cout << "\033[2J\033[H";
 	for (int i = 0; i < ROWS; ++i)
 	{
 		for (int j = 0; j < COLUMNS; ++j)
-			cout << board[i][j] << " ";
+		{
+			if (board[i][j] == PLAYER) cout << "X ";
+			else if (board[i][j] == COMP) cout << "O ";
+			else cout << ". ";
+		}
 		cout << endl;
 	}
 
@@ -166,8 +169,10 @@ int minimax(int depth, int alpha, int beta, bool isMax)
 		{
 			int row = getNextFreeSpace(col);
 			board[row][col] = COMP;
+			moveCount++;
 			int v = isWinningMove(COMP) ? (INT_MAX - (10 - depth)) : minimax(depth - 1, alpha, beta, false);
 			board[row][col] = EMPTY;
+			moveCount--;
 
 			maxScore = max(maxScore, v);
 			alpha = max(alpha, v);
@@ -184,8 +189,10 @@ int minimax(int depth, int alpha, int beta, bool isMax)
 		{
 			int row = getNextFreeSpace(col);
 			board[row][col] = PLAYER;
+			moveCount++;
 			int v = isWinningMove(PLAYER) ? (INT_MIN + (10 - depth)) : minimax(depth - 1, alpha, beta, true);
 			board[row][col] = EMPTY;
+			moveCount--;
 
 			minScore = min(minScore, v);
 			beta = min(beta, v);
@@ -200,6 +207,25 @@ int minimax(int depth, int alpha, int beta, bool isMax)
 int getBestMove(int maxDepth)
 {
 	vector<int> moves = getValidMoves();
+
+	for (int col : moves)
+	{
+		int row = getNextFreeSpace(col);
+		board[row][col] = COMP;
+		bool win = isWinningMove(COMP);
+		board[row][col] = EMPTY;
+		if (win) return col;
+	}
+
+	for (int col : moves)
+	{
+		int row = getNextFreeSpace(col);
+		board[row][col] = PLAYER;
+		bool loss = isWinningMove(PLAYER);
+		board[row][col] = EMPTY;
+		if (loss) return col;
+	}
+
 	int bestMove = moves[0];
 	for (int depth = 1; depth <= maxDepth; ++depth)
 	{
@@ -232,7 +258,12 @@ int main()
 		do
 		{
 			cout << "Enter your move: ";
-			cin >> col;
+			if (!(cin >> col))
+			{
+				cin.clear();
+				cin.ignore(numeric_limits<streamsize>::max(), '\n');
+				col = 0;
+			}
 			--col;
 			if (col < 0 || col > 6 || !isValid(col))
 			{
